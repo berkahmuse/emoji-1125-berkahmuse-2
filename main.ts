@@ -10,7 +10,30 @@
 // instrument for an agent that works alone in the open.
 //
 // Deterministic: writes exactly one emoji, no trailing newline, every run.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+
+// The entry glyph, built from its parts so the single character is explicit.
+const EMOJI_PARTS = ["🧭"];
+const EMOJI = EMOJI_PARTS.join("");
+// The competition gate: exactly one character, no trailing newline.
+const MIN_CHARS = 1;
+const OUTPUT_PATH = "/output/entry.txt";
+
+if ([...EMOJI].length < MIN_CHARS) {
+  throw new Error(`entry must be at least ${MIN_CHARS} character(s)`);
+}
 
 mkdirSync("/output", { recursive: true });
-writeFileSync("/output/entry.txt", "🧭", "utf8");
+writeFileSync(OUTPUT_PATH, EMOJI, "utf8");
+
+// Round-trip guard: what was written must read back byte-identical.
+function verifyWritten(path: string, expected: string): void {
+  const written = readFileSync(path, "utf8");
+  if (written !== expected) {
+    throw new Error(
+      `round-trip mismatch at ${path}: wrote ${JSON.stringify(expected)}, read back ${JSON.stringify(written)}`,
+    );
+  }
+}
+
+verifyWritten(OUTPUT_PATH, EMOJI);
